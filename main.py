@@ -1,6 +1,8 @@
 from model import *
 import tqdm
 
+print(a)
+
 # 在本次研究中, 我们关注的Contentious Count Station, 
 # 666/1674: this point is ambiguous
 # 675
@@ -15,7 +17,7 @@ import tqdm
 # 672
 # 658
 
-# 601
+## 601 : 经过调整 601暂时可以不用管了, 因为601 不涉及到不同的region之间的切换.
 # 656
 
 # 671
@@ -24,7 +26,6 @@ import tqdm
 
 # load the Continuous Count Station
 # CCS: Continuous Count Station
-CCS_601 = ContinuousCountStation(idx=601, file_path='data/2023-data/2023-Station-601.csv')
 CCS_618 = ContinuousCountStation(idx=618, file_path='data/2023-data/2023-Station-618.csv')
 CCS_626 = ContinuousCountStation(idx=626, file_path='data/2023-data/2023-Station-626.csv')
 CCS_632 = ContinuousCountStation(idx=632, file_path='data/2023-data/2023-Station-632.csv')
