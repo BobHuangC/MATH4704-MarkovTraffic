@@ -1,3 +1,12 @@
+### Specific model method
+
+对Continous Couting Station主要进行建模.
+CCS要确定自己的PLane对应的Region和NLane对应的Region.
+
+
+现在比较痛苦的一个点就是搞不懂CCS的具体含义. 与具体的车道的关系.
+
+
 # description of the project
 
 https://github.com/xiaochus/TrafficFlowPrediction.git is the corresponding repo of paper "Traffic Flow Prediction With Big Data: A deep learning approach". 
