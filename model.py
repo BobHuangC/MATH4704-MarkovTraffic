@@ -1,26 +1,14 @@
-# 在本次研究中, 我们关注的Contious Count Station, 
-# 666/1674: this point is ambiguous
-# 675
-# 643
-# 1673
-# 662
-# 648
+# 在本次研究中, 我们关注的Contious Count Station 为:
+# [601, 626, 632, 635, 643, 645, 647, 648, 656, 658, 662, 671, 672, 675, 676] 
 
-# 626
-# 618
-# 632
-# 672
-# 658
-
-# 601
-# 656
-
-# 671
-# 645
-# 647
+# 我们研究一天之内的数据, 所以在程序的开始加载当日的所有数据.
+Date = '2023-01-03'
 
 import pandas as pd
-# Transition Point 指的是车辆流量的连续计数站
+
+# Continuous Count Station 代表了一个交通流的连续计数站
+# 它记录了PLane 方向的车道上的车辆的数量, 以及NLane方向的车道上的车辆的数量
+# 在我们的研究中, 我们只关注那些横跨不同Region 的 CCS
 class ContinuousCountStation:
     # file_path: the path of the file that contains the traffic data
     def __init__(self, idx, file_path, P_input_region, P_output_region) -> None:
@@ -32,57 +20,52 @@ class ContinuousCountStation:
         # NLane is contrary to PLane
         self.N_input_region = P_output_region
         self.N_output_region = P_input_region
+        _data = pd.read_csv(self.file_path)
+        self.Tdata = _data[_data['DATE'] == Date]
+        if len(self.Tdata) == 0:
+            print("Error: the data for this date is not available")
 
     # get the data of the transition point
     # 根据region, 判断经过这个收费站给这个region的车辆的变化量
-    def get_data(self, date, hour, region):
+    def get_traffic_flow(self, hour, region_idx):
         """
         date: the date of the data
         hour: the hour of the data
         region: 
         """
+        if region_idx != self.P_input_region and region_idx != self.P_output_region:
+            print(f'Error: the region {region_idx} is not related to the CCS {self.idx}')
+            return 0
+        
+        # traffic flow 对于该region的变化量分为两方面
+        # 一方面是进入这个region的车辆的数量
+        # 另一方面是离开这个region的车辆的数量
+        if region_idx == self.P_input_region:
+            _tmp_input_data = self.Tdata[self.Tdata['LANE'].str.startswith('P')]
+            traffic_amount = _tmp_input_data['H' + str(hour).zfill(2) + '00'].sum()
+            _tmp_output_data = self.Tdata[self.Tdata['LANE'].str.startswith('N')]
+            traffic_amount -= _tmp_output_data['H' + str(hour).zfill(2) + '00'].sum()
+        else:
+            _tmp_input_data = self.Tdata[self.Tdata['LANE'].str.startswith('N')]
+            traffic_amount = _tmp_input_data['H' + str(hour).zfill(2) + '00'].sum()
+            _tmp_output_data = self.Tdata[self.Tdata['LANE'].str.startswith('P')]
+            traffic_amount -= _tmp_output_data['H' + str(hour).zfill(2) + '00'].sum()
+        return traffic_amount
+            
 
-        # 首先判断这个region是不是在
-        _data = pd.read_csv(self.file_path)
-        _data = _data[_data['date'] == date]
-        _data = _data[_data['hour'] == hour]
-        return _data
+
         
 
 
 class Region:#
     # Region 有一个idx, 还有一个string的名字
-    # input_CCS 代表这些CCS的数据中的P车道相关的数据是进入这个Region的数据, N车道相关的数据是离开这个Region的数据
-    # output_CCS 代表这些CCS的数据中的P车道相关的数据是离开这个Region的数据, N车道相关的数据是进入这个Region的数据
-    def __init__(self, idx, name):
-                #  input_CCSs : list[ContinuousCountStation], 
-                #  output_CCSs : list[ContinuousCountStation]) -> None:
+    # relatedCSS 表示和当前Region相关的CSS
+    def __init__(self, idx, name, relatedCSSs, initial_traffic_amount):
         self.idx = idx
         self.name = name
-        # self.input_CCSs = input_CCSs
-        # self.output_CCSs = output_CCSs
+        self.relatedCSSs = relatedCSSs
+        self.traffic_amount = initial_traffic_amount
     
-    # 传入所有的CCS, 根据CCS的数据, 
-    def get_CCS_direction(self, CCSs):
-        pass
-        self.input_CCSs = []
-        self.output_CCSs = []
-
-class TrafficNetwork:
-    def __init__(self):
-        self.regions = []
-        self.transition_points  = []
-
-    def transition():
-        pass
-
-
-
-# transition point represents the continuous Count Station
-# in fact the coutinous count of the traffic flow represents the transition mount of different states
-
-
-
 # 因为数据的相关原因, 实际上不是很清楚PLane和NLane代表的方向.
 # 尽量采取以下的规则, 
 # 对于横向的道路, P代表的是从西到东, N代表的是从东边到西边
