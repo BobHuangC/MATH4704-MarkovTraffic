@@ -25,6 +25,7 @@ class ContinuousCountStation:
 
     # get the data of the transition point
     # 根据region, 判断经过这个收费站给这个region的车辆的变化量
+    # 分开表示， 既表示进入的车辆的数量， 又表示离开的车辆的数量
     def get_traffic_flow(self, hour, region_idx):
         """
         date: the date of the data
@@ -40,15 +41,15 @@ class ContinuousCountStation:
         # 另一方面是离开这个region的车辆的数量
         if region_idx == self.P_input_region:
             _tmp_input_data = self.Tdata[self.Tdata['LANE'].str.startswith('P')]
-            traffic_amount = _tmp_input_data['H' + str(hour).zfill(2) + '00'].sum()
+            _tmp_input = _tmp_input_data['H' + str(hour).zfill(2) + '00'].sum()
             _tmp_output_data = self.Tdata[self.Tdata['LANE'].str.startswith('N')]
-            traffic_amount -= _tmp_output_data['H' + str(hour).zfill(2) + '00'].sum()
+            _tmp_output = _tmp_output_data['H' + str(hour).zfill(2) + '00'].sum()
         else:
             _tmp_input_data = self.Tdata[self.Tdata['LANE'].str.startswith('N')]
-            traffic_amount = _tmp_input_data['H' + str(hour).zfill(2) + '00'].sum()
+            _tmp_input = _tmp_input_data['H' + str(hour).zfill(2) + '00'].sum()
             _tmp_output_data = self.Tdata[self.Tdata['LANE'].str.startswith('P')]
-            traffic_amount -= _tmp_output_data['H' + str(hour).zfill(2) + '00'].sum()
-        return traffic_amount
+            _tmp_output = _tmp_output_data['H' + str(hour).zfill(2) + '00'].sum()
+        return _tmp_input, _tmp_output
             
 
 class Region:#
@@ -64,7 +65,9 @@ class Region:#
     def getRegionTrafficChange(self, hour):
         traffic_change = 0
         for _css in self.relatedCSSs:
-            traffic_change += _css.get_traffic_flow(hour, self.idx)
+            _tmp_input, _tmp_output = _css.get_traffic_flow(hour, self.idx)
+            traffic_change += _tmp_input
+            traffic_change -= _tmp_output
         return traffic_change
 
     # get the traffic amount of the region by the beginning of the hourth-hour
@@ -78,6 +81,11 @@ class Region:#
         for hour in range(24):
             self.traffic_amount.append(self.traffic_amount[-1] + self.getRegionTrafficChange(hour))
     
+    # 一个列向量, 表示从自己到别的的
+    def getTransition2Regions(self, hour, region_idx):
+        if region_idx == self.idx:
+            return 0
+        return self.getRegionTrafficChange(hour)
 
 
 # 因为数据的相关原因, 实际上不是很清楚PLane和NLane代表的方向.
@@ -85,8 +93,6 @@ class Region:#
 # 对于横向的道路, P代表的是从西到东, N代表的是从东边到西边
 # 对于纵向的道路, P代表的是从北到南, N代表的是从南到北
 # 对于从西北到东南的那条主干道, P代表的是从西北到东南, N代表的是从东南到西北
-
-
 def initialize_CSSs(date):
     # 601 还是有用的, 它实际上也对应了一条道路.
     # 1 -> 5
@@ -203,7 +209,7 @@ def initialize_CSSs(date):
             CCS_645, CCS_647, CCS_648, CCS_656, CCS_658,\
             CCS_662, CCS_671, CCS_672, CCS_675, CCS_676
                                 
-
+# initialization of the CSSs and Regions
 def initialize_CSSs_and_Regions(date, initials_traffic_amount_list):
     region_1_initial_traffic_amount = initials_traffic_amount_list[0]
     region_2_initial_traffic_amount = initials_traffic_amount_list[1]
