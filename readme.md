@@ -6,6 +6,50 @@ CCS要确定自己的PLane对应的Region和NLane对应的Region.
 
 现在比较痛苦的一个点就是搞不懂CCS的具体含义. 与具体的车道的关系.
 
+#### vehicles / per person
+
+https://en.wikipedia.org/wiki/List_of_U.S._states_by_vehicles_per_capita
+Utah 的人均车辆数量数据来源
+
+#### population
+
+Salt Lake City Population https://datacommons.org/place/geoId/4967000?utm_medium=explore&mprop=count&popt=Person&hl=en
+
+https://www2.census.gov/programs-surveys/popest/tables
+
+
+
+https://datacommons.org/place/geoId/4944320
+
+population of Lehi
+
+Lehi的差不多是 2区和3区的重叠
+人口 2022: 84373
+
+Highland 差不多是 1区的重叠
+
+19,902
+
+American Fork + Pleasant Grove 差不多是 4区的重叠
+
+American Fork 人口 2022: 37,268
+Pleasant Grove 人口 2022: 37,630
+
+5区: Heber City 人口 2022: 17,865
+5区相对比较远, 所有转移应该会比较少.
+
+6区: Bluffdale : 19080
+Herriman:  59,179 
+Draper:  50,731
+
+
+7区: Eagle Moutain 54,149 
+
+8区: Lindon 11,704 
+Orem 95,910 
+Vineyard  14,535
+
+
 
 # description of the project
 
