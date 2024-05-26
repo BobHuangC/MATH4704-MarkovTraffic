@@ -60,6 +60,7 @@ class Region:#
         self.name = name
         self.relatedCSSs = relatedCSSs
         self.traffic_amount = [initial_traffic_amount]
+        print('The initial traffic amount of Region ', self.idx, ' is ', initial_traffic_amount)
 
     # 获得第hour个小时到第hour+1个小时之间的车辆数量的变化量
     def getRegionTrafficChange(self, hour):
@@ -81,12 +82,25 @@ class Region:#
         for hour in range(24):
             self.traffic_amount.append(self.traffic_amount[-1] + self.getRegionTrafficChange(hour))
     
-    # 一个列向量, 表示从自己到别的的
-    def getTransition2Regions(self, hour, region_idx):
-        if region_idx == self.idx:
-            return 0
-        return self.getRegionTrafficChange(hour)
-
+    # 计算从begin_hour 到 end_hour之间 的转移概率
+    # 一个列向量, 表示从自己到其他region的转移概率
+    # 表示从hour:00 到 hour+1:00 的时间内从自己到其他region的转移概率
+    def getTransition2Regions(self, begin_hour, end_hour):
+        # 8 个 regions 固定
+        output_trans_vector = [0] * 8
+        # hour:00 时候自己内部的车辆数量
+        _current_traffic_amount = self.getTrafficAmountByHour(begin_hour)
+        for _css in self.relatedCSSs:
+            _another_region_idx = _css.P_input_region if _css.P_input_region != self.idx else _css.P_output_region
+            _transition = 0
+            for _hour in range(begin_hour, end_hour):
+                _tmp_input, _tmp_output = _css.get_traffic_flow(_hour, self.idx)
+                _transition += _tmp_output / _current_traffic_amount
+            
+            output_trans_vector[_another_region_idx-1] = _transition
+        
+        output_trans_vector[self.idx-1] = 1 - sum(output_trans_vector)
+        return output_trans_vector
 
 # 因为数据的相关原因, 实际上不是很清楚PLane和NLane代表的方向.
 # 尽量采取以下的规则, 
