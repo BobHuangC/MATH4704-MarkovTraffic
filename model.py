@@ -203,3 +203,55 @@ def initialize_CSSs(date):
             CCS_645, CCS_647, CCS_648, CCS_656, CCS_658,\
             CCS_662, CCS_671, CCS_672, CCS_675, CCS_676
                                 
+
+def initialize_CSSs_and_Regions(date, initials_traffic_amount_list):
+    region_1_initial_traffic_amount = initials_traffic_amount_list[0]
+    region_2_initial_traffic_amount = initials_traffic_amount_list[1]
+    region_3_initial_traffic_amount = initials_traffic_amount_list[2]
+    region_4_initial_traffic_amount = initials_traffic_amount_list[3]
+    region_5_initial_traffic_amount = initials_traffic_amount_list[4]
+    region_6_initial_traffic_amount = initials_traffic_amount_list[5]
+    region_7_initial_traffic_amount = initials_traffic_amount_list[6]
+    region_8_initial_traffic_amount = initials_traffic_amount_list[7]
+    CCS_601, CCS_626, CCS_632, CCS_635, CCS_643,\
+            CCS_645, CCS_647, CCS_648, CCS_656, CCS_658,\
+            CCS_662, CCS_671, CCS_672, CCS_675, CCS_676 = initialize_CSSs(date=date)
+    # initialization of Regions
+    # Region1 基本可以认为是Highland, UT, USA
+    Region_1  = Region(idx=1, name='Region_1', 
+                            relatedCSSs=[CCS_601, CCS_643, CCS_656, CCS_675, CCS_676], 
+                            initial_traffic_amount=region_1_initial_traffic_amount)
+
+    # Region 2 + Region 3 可以认为是Lehi, UT, USA
+    # 因此可以认为两者平分Lehi
+    Region_2  = Region(idx=2, name='Region_2', 
+                            relatedCSSs=[CCS_635, CCS_643, CCS_648, CCS_658, CCS_662, CCS_672, CCS_675, CCS_676],
+                            initial_traffic_amount=region_2_initial_traffic_amount)
+    Region_3  = Region(idx=3, name='Region_3', 
+                            relatedCSSs=[CCS_626, CCS_632, CCS_648, CCS_662],
+                            initial_traffic_amount=region_3_initial_traffic_amount)
+
+    # Region 4 可以认为是 American Fork, UT, USA + Pleasant Grove, UT, USA
+    Region_4 = Region(idx=4, name='Region_4', 
+                            relatedCSSs=[CCS_632, CCS_645,  CCS_647, CCS_656, CCS_658, CCS_671, CCS_672],
+                            initial_traffic_amount=region_4_initial_traffic_amount)
+
+    # Region 5本身是一个山区, 估一个数字
+    Region_5 = Region(idx=5, name='Region_5', 
+                            relatedCSSs=[CCS_601],
+                            initial_traffic_amount=region_5_initial_traffic_amount)
+
+    # Region 6 可以认为是Salt Lake City, UT, USA
+    Region_6 = Region(idx=6, name='Region_6', 
+                            relatedCSSs=[CCS_635],
+                            initial_traffic_amount=region_6_initial_traffic_amount)
+    Region_7 = Region(idx=7, name='Region_7', 
+                            relatedCSSs=[CCS_626, ],
+                            initial_traffic_amount=region_7_initial_traffic_amount)
+    Region_8 = Region(idx=8, name='Region_8', 
+                            relatedCSSs=[CCS_645,  CCS_647, CCS_671],
+                            initial_traffic_amount=region_8_initial_traffic_amount)
+    return CCS_601, CCS_626, CCS_632, CCS_635, CCS_643,\
+            CCS_645, CCS_647, CCS_648, CCS_656, CCS_658,\
+            CCS_662, CCS_671, CCS_672, CCS_675, CCS_676,\
+            Region_1, Region_2, Region_3, Region_4, Region_5, Region_6, Region_7, Region_8

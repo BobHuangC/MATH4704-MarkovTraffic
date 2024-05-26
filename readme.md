@@ -1,3 +1,7 @@
+# MATH-4704 MarkovTraffic
+
+This repo is BobHuangC's project homework for MATH-4704.
+
 ### Specific model method
 
 对Continous Couting Station主要进行建模.
