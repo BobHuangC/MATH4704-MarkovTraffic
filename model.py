@@ -32,6 +32,7 @@ class ContinuousCountStation:
         hour: the hour of the data
         region: 
         """
+        assert(region_idx == self.P_input_region or region_idx == self.P_output_region)
         if region_idx != self.P_input_region and region_idx != self.P_output_region:
             print(f'Warning: the region {region_idx} is not related to the CCS {self.idx}')
             return 0
@@ -90,6 +91,8 @@ class Region:#
         output_trans_vector = [0] * 8
         # hour:00 时候自己内部的车辆数量
         _current_traffic_amount = self.getTrafficAmountByHour(begin_hour)
+        if begin_hour == 1 and self.idx == 1:
+            print(_current_traffic_amount, ' this is the current traffic amount for region 1 at 01:00')
         for _css in self.relatedCSSs:
             _another_region_idx = _css.P_input_region if _css.P_input_region != self.idx else _css.P_output_region
             _transition = 0
@@ -97,7 +100,7 @@ class Region:#
                 _tmp_input, _tmp_output = _css.get_traffic_flow(_hour, self.idx)
                 _transition += _tmp_output / _current_traffic_amount
             
-            output_trans_vector[_another_region_idx-1] = _transition
+            output_trans_vector[_another_region_idx-1] += _transition
         
         output_trans_vector[self.idx-1] = 1 - sum(output_trans_vector)
         return output_trans_vector
@@ -108,12 +111,13 @@ class Region:#
     def getTransition2Region(self, begin_hour, end_hour):
         output_trans_vector = [0] * 8
         for _css in self.relatedCSSs:
+            assert(self.idx == _css.P_input_region or self.idx == _css.P_output_region)
             _another_region_idx = _css.P_input_region if _css.P_input_region != self.idx else _css.P_output_region
             _transition = 0
             for _hour in range(begin_hour, end_hour):
                 _tmp_input, _tmp_output = _css.get_traffic_flow(_hour, self.idx)
                 _transition += _tmp_output
-            output_trans_vector[_another_region_idx-1] = _transition
+            output_trans_vector[_another_region_idx - 1] += _transition
         return output_trans_vector
 
 # 因为数据的相关原因, 实际上不是很清楚PLane和NLane代表的方向.
