@@ -1,7 +1,15 @@
 # 在本次研究中, 我们关注的Contious Count Station 为:
 # [601, 626, 632, 635, 643, 645, 647, 648, 656, 658, 662, 671, 672, 675, 676] 
-
 import pandas as pd
+import numpy as np
+
+# 我们需要记录一个全局的表示不同区域车辆数量的列表
+# 我们需要记录一个全局的表示从当前时刻开始的在每个区域, 到某个时刻结束的时候在另外一个区域的车辆数量的列表
+# 根据这两个列表, 我们可以计算出一个转移概率矩阵
+# current_time_traffic_amont[i][j] represents the traffic amount of the i-th region at the current time
+# 0:00 - 24:00(the 0:00 of tomorrow)
+current_time_traffic_amount = np.zeros(shape=(8, 25))
+
 
 # Continuous Count Station 代表了一个交通流的连续计数站
 # 它记录了PLane 方向的车道上的车辆的数量, 以及NLane方向的车道上的车辆的数量
@@ -60,7 +68,9 @@ class Region:#
         self.idx = idx
         self.name = name
         self.relatedCSSs = relatedCSSs
-        self.traffic_amount = [initial_traffic_amount]
+        global current_time_traffic_amount
+        current_time_traffic_amount[self.idx - 1][0] = initial_traffic_amount
+        # self.traffic_amount = [initial_traffic_amount]
         print('The initial traffic amount of Region ', self.idx, ' is ', initial_traffic_amount)
 
     # 获得第hour个小时到第hour+1个小时之间的车辆数量的变化量
@@ -77,16 +87,20 @@ class Region:#
     # hour = 1, 表示获得第1个小时开始的时候的车辆数量, 即01:00的车辆数量
     # hour = 24, 表示获得第24个小时开始的时候的车辆数量, 即第二天的00:00的车辆数量
     def getTrafficAmountByHour(self, hour):
-        return self.traffic_amount[hour]
+        global current_time_traffic_amount
+        return current_time_traffic_amount[self.idx - 1][hour]
 
     def updateTrafficNumber(self):
-        for hour in range(24):
-            self.traffic_amount.append(self.traffic_amount[-1] + self.getRegionTrafficChange(hour))
+        global current_time_traffic_amount
+        for _hour in range(24):
+            current_time_traffic_amount[self.idx - 1][_hour + 1] = current_time_traffic_amount[self.idx - 1][_hour] + self.getRegionTrafficChange(_hour)
+        # for hour in range(24):
+        #     self.traffic_amount.append(self.traffic_amount[-1] + self.getRegionTrafficChange(hour))
     
 
-    # 从当前Region到其他Region的具体转移数额
+    # 计算begin_hour:00 在当前region, end_hour:00 在其他region的车辆的数量.
     # TODO(BobHuangC): test the correctness of this function
-    def getTransition2Region(self, begin_hour, end_hour):
+    def getTransitionAmount2Region(self, begin_hour, end_hour):
         output_trans_vector = [0] * 8
         for _css in self.relatedCSSs:
             assert(self.idx == _css.P_input_region or self.idx == _css.P_output_region)
@@ -106,7 +120,7 @@ class Region:#
         output_trans_vector = [0] * 8
         # hour:00 时候自己内部的车辆数量
         _current_traffic_amount = self.getTrafficAmountByHour(begin_hour)
-        _output_vec = self.getTransition2Region(begin_hour, end_hour)
+        _output_vec = self.getTransitionAmount2Region(begin_hour, end_hour)
         output_trans_vector = [x / _current_traffic_amount for x in _output_vec]
         output_trans_vector[self.idx-1] = 1 - sum(output_trans_vector)
         return output_trans_vector
