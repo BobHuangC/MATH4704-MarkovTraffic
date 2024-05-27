@@ -57,7 +57,6 @@ Vineyard  14,535
 
 # description of the project
 
-https://github.com/xiaochus/TrafficFlowPrediction.git is the corresponding repo of paper "Traffic Flow Prediction With Big Data: A deep learning approach". 
 
 上面的数据申请比较麻烦
 
