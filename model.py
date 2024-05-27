@@ -4,11 +4,30 @@ import pandas as pd
 import numpy as np
 
 # 我们需要记录一个全局的表示不同区域车辆数量的列表
-# 我们需要记录一个全局的表示从当前时刻开始的在每个区域, 到某个时刻结束的时候在另外一个区域的车辆数量的列表
-# 根据这两个列表, 我们可以计算出一个转移概率矩阵
 # current_time_traffic_amont[i][j] represents the traffic amount of the i-th region at the current time
 # 0:00 - 24:00(the 0:00 of tomorrow)
 current_time_traffic_amount = np.zeros(shape=(8, 25))
+
+# 我们需要记录一个全局的表示从当前时刻开始的在每个区域, 到某个时刻结束的时候在另外一个区域的车辆数量的列表
+# 根据这两个列表, 我们可以计算出一个转移概率矩阵
+# region_transition_amount[i][j][m][k] represents the traffic amount 
+# that at the m:00 hour at the Region i
+# after k hours, AKA, at the (m+k):00 hour, 
+# the traffic amount at the Region j
+region_transition_amount = np.zeros(shape=(8, 8, 24, 25))
+# the update rule of the region_transition_amount is :
+# region_transition_amount[i][j][m][k] = 
+# \sum_{l=0}^{7} region_transition_amount[i][l][m][k-1] * (region_traffic_amount[l][j][m+k-1][1] / current_time_traffic_amount[l][m+k-1])
+# the rule of calculating region_transition_amount: first input all the cases for k=0 and k=1 then use the above rule to calculate the rest of the cases
+
+
+# 我们需要记录一个全局的转移率的矩阵
+# region_transition_matrix[i][j][m][k] represents the transition probability from the Region i to the Region j 
+# the time of the transition is from the m:00 hour to the (m+k):00 hour
+# k-step transition matrix
+region_transition_matrix = np.zeros(shape=(8, 8, 24, 25))
+# the update rule of the region_transition_matrix is:
+# region_transition_matrix[i][j][m][k] = region_transition_amount[i][j][m][k] / current_time_traffic_amount[i][m]
 
 
 # Continuous Count Station 代表了一个交通流的连续计数站
@@ -68,8 +87,16 @@ class Region:#
         self.idx = idx
         self.name = name
         self.relatedCSSs = relatedCSSs
+        
+        # initialization of the traffic amount of the region
         global current_time_traffic_amount
         current_time_traffic_amount[self.idx - 1][0] = initial_traffic_amount
+        # update the traffic number
+        for _hour in range(24):
+            current_time_traffic_amount[self.idx - 1][_hour + 1] = current_time_traffic_amount[self.idx - 1][_hour] + self.getRegionTrafficChange(_hour)
+
+        global region_transition_amount
+        region_transition_amount[self.idx - 1][self.idx - 1][0][0] = initial_traffic_amount
         # self.traffic_amount = [initial_traffic_amount]
         print('The initial traffic amount of Region ', self.idx, ' is ', initial_traffic_amount)
 
@@ -90,13 +117,11 @@ class Region:#
         global current_time_traffic_amount
         return current_time_traffic_amount[self.idx - 1][hour]
 
-    def updateTrafficNumber(self):
-        global current_time_traffic_amount
-        for _hour in range(24):
-            current_time_traffic_amount[self.idx - 1][_hour + 1] = current_time_traffic_amount[self.idx - 1][_hour] + self.getRegionTrafficChange(_hour)
-        # for hour in range(24):
-        #     self.traffic_amount.append(self.traffic_amount[-1] + self.getRegionTrafficChange(hour))
-    
+    # def updateTrafficNumber(self):
+    #     global current_time_traffic_amount
+    #     for _hour in range(24):
+    #         current_time_traffic_amount[self.idx - 1][_hour + 1] = current_time_traffic_amount[self.idx - 1][_hour] + self.getRegionTrafficChange(_hour)
+
 
     # 计算begin_hour:00 在当前region, end_hour:00 在其他region的车辆的数量.
     # TODO(BobHuangC): test the correctness of this function
