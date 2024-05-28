@@ -8,6 +8,13 @@ import numpy as np
 # 0:00 - 24:00(the 0:00 of tomorrow)
 current_time_traffic_amount = np.zeros(shape=(8, 25))
 
+
+# 我们需要一个显式的记录不同时刻, 不同区域之间车辆转移的情况(1小时的时间粒度)
+# hourly_traffic_among_regions[i][j][m] represents 
+# the traffic amount from the i-th region to j-th region during the time of m:00 - m+1:00
+hourly_traffic_among_regions = np.zeros(shape=(8, 8, 24))
+
+
 # 我们需要记录一个全局的表示从当前时刻开始的在每个区域, 到某个时刻结束的时候在另外一个区域的车辆数量的列表
 # 根据这两个列表, 我们可以计算出一个转移概率矩阵
 # region_transition_amount[i][j][m][k] represents the traffic amount 
@@ -29,6 +36,7 @@ region_transition_matrix = np.zeros(shape=(8, 8, 24, 25))
 # the update rule of the region_transition_matrix is:
 # region_transition_matrix[i][j][m][k] = region_transition_amount[i][j][m][k] / current_time_traffic_amount[i][m]
 
+region_transition_matrix_v2 = np.zeros(shape=(8, 8, 24, 25))
 
 # Continuous Count Station 代表了一个交通流的连续计数站
 # 它记录了PLane 方向的车道上的车辆的数量, 以及NLane方向的车道上的车辆的数量
@@ -101,13 +109,15 @@ class Region:#
         for _hour in range(24):
             region_transition_amount[self.idx - 1][self.idx - 1][_hour][0] = current_time_traffic_amount[self.idx - 1][_hour]
             # 0 hour 内到other region的转移量自然是0, 不用初始化
-            
+        
+        global hourly_traffic_among_regions
         for begin_hour in range(24):
             # 获取一个小时内的转移量的这个函数是正确的
-            _tmp_one_hour_transition = self.getTransitionAmount2Region(begin_hour, begin_hour + 1)
+            _tmp_one_hour_transition = self.getTransitionAmount2RegionOneHour(begin_hour)
             for _region_idx in range(8):
                 region_transition_amount[self.idx - 1][_region_idx][begin_hour][1] = _tmp_one_hour_transition[_region_idx]
-
+                hourly_traffic_among_regions[self.idx - 1][_region_idx][begin_hour] = _tmp_one_hour_transition[_region_idx]
+                
     # 获得第hour个小时到第hour+1个小时之间的车辆数量的变化量
     def getRegionTrafficChange(self, hour):
         traffic_change = 0
@@ -131,20 +141,19 @@ class Region:#
     #         current_time_traffic_amount[self.idx - 1][_hour + 1] = current_time_traffic_amount[self.idx - 1][_hour] + self.getRegionTrafficChange(_hour)
 
 
-    # 计算begin_hour:00 在当前region, end_hour:00 在其他region的车辆的数量.
+    # 计算begin_hour:00 在当前region, begin_hour + 1:00 在其他region的车辆的数量.
     # TODO(BobHuangC): test the correctness of this function
-    def getTransitionAmount2Region(self, begin_hour, end_hour):
+    def getTransitionAmount2RegionOneHour(self, begin_hour):
         # 当前还是有用的, 但是只能用来算一个hour内的
-        assert (end_hour - begin_hour == 1)
         output_trans_vector = [0] * 8
         for _css in self.relatedCSSs:
             assert(self.idx == _css.P_input_region or self.idx == _css.P_output_region)
             _another_region_idx = _css.P_input_region if _css.P_input_region != self.idx else _css.P_output_region
-            _transition = 0
-            for _hour in range(begin_hour, end_hour):
-                _tmp_input, _tmp_output = _css.get_traffic_flow(_hour, self.idx)
-                _transition += _tmp_output
-            output_trans_vector[_another_region_idx - 1] += _transition
+            # for _hour in range(begin_hour, end_hour):
+            #     _tmp_input, _tmp_output = _css.get_traffic_flow(_hour, self.idx)
+            #     _transition += _tmp_output
+            _tmp_input, _tmp_output = _css.get_traffic_flow(begin_hour, self.idx)
+            output_trans_vector[_another_region_idx - 1] += _tmp_output
         
         # 加入转移到自己的车辆数量
         global current_time_traffic_amount
@@ -159,7 +168,7 @@ class Region:#
         output_trans_vector = [0] * 8
         # hour:00 时候自己内部的车辆数量
         _current_traffic_amount = self.getTrafficAmountByHour(begin_hour)
-        _output_vec = self.getTransitionAmount2Region(begin_hour, end_hour)
+        _output_vec = self.getTransitionAmount2RegionOneHour(begin_hour)
         output_trans_vector = [x / _current_traffic_amount for x in _output_vec]
         output_trans_vector[self.idx-1] = 1 - sum(output_trans_vector)
         return output_trans_vector
@@ -369,3 +378,34 @@ def initialize_region_transition_matrix():
                         continue
                     region_transition_matrix[_begin_region_idx][_end_region_idx][_begin_hour][_k] =\
                     region_transition_amount[_begin_region_idx][_end_region_idx][_begin_hour][_k] / current_time_traffic_amount[_begin_region_idx][_begin_hour]
+
+
+     
+# v2 of building region_transition_matrix
+def initialize_region_transition_matrix_v2():
+    # 根据region_transition_amount, current_time_traffic_amount, 来初始化k=1的情况, 
+    # 然后根据k=1的情况, 来推导 k = 2 的情况, 以此类推
+    global region_transition_matrix_v2
+    for _begin_region_idx in range(8):
+        for _begin_hour in range(24):
+            region_transition_matrix_v2[_begin_region_idx][_begin_region_idx][_begin_hour][0] = 1
+
+    for _begin_region_idx in range(8):
+        for _end_region_idx in range(8):
+            for _begin_hour in range(24):
+                region_transition_matrix_v2[_begin_region_idx][_end_region_idx][_begin_hour][1] = \
+                region_transition_amount[_begin_region_idx][_end_region_idx][_begin_hour][1] /\
+                    current_time_traffic_amount[_begin_region_idx][_begin_hour]
+
+    for _begin_region_idx in range(8):
+        for _end_region_idx in range(8):
+            for _begin_hour in range(24):
+                for _k in range(2, 25):
+                    if _begin_hour + _k >= 25:
+                        continue
+                    _tmp_sum = 0
+                    for _l in range(8):
+                        _tmp_sum += \
+                            region_transition_matrix_v2[_begin_region_idx][_l][_begin_hour][_k-1] * \
+                                (region_transition_matrix_v2[_l][_end_region_idx][_begin_hour + _k - 1][1])
+                    region_transition_matrix_v2[_begin_region_idx][_end_region_idx][_begin_hour][_k] = _tmp_sum
