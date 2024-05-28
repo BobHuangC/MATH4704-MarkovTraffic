@@ -39,7 +39,7 @@ class ContinuousCountStation:
         self.Tdata = _data[_data['DATE'] == date]
         if len(self.Tdata) == 0:
             print('CCS idx: ', self.idx)
-            print("Warning: the data for this date is not available")
+            print("Warning: the data for this date is empty")
 
     # get the data of the transition point
     # 根据region, 判断经过这个收费站给这个region的车辆的变化量
@@ -342,15 +342,6 @@ def initialize_region_transition_matrix_v2():
             if _begin_hour + _k < 25:
                 region_transition_matrix_v2[_begin_hour][_k] = np.dot(region_transition_matrix_v2[_begin_hour][_k-1], region_transition_matrix_v2[_begin_hour+_k-1][1])
 
-    # for _begin_region_idx in range(8):
-    #     for _end_region_idx in range(8):
-    #         for _begin_hour in range(24):
-    #             for _k in range(2, 25):
-    #                 if _begin_hour + _k >= 25:
-    #                     continue
-    #                 _tmp_sum = 0
-    #                 for _l in range(8):
-    #                     _tmp_sum += \
-    #                         region_transition_matrix_v2[_begin_hour][_k-1][_begin_region_idx][_l] * \
-    #                             (region_transition_matrix_v2[_begin_hour + _k - 1][1][_l][_end_region_idx])
-    #                 region_transition_matrix_v2[_begin_hour][_k][_begin_region_idx][_end_region_idx] = _tmp_sum
+
+def get_hour_k_step_transition_matrix(begin_hour, k):
+    return np.array(region_transition_matrix_v2[begin_hour][k])
