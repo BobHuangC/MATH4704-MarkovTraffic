@@ -15,18 +15,6 @@ current_time_traffic_amount = np.zeros(shape = (25, 8))
 hourly_traffic_among_regions = np.zeros(shape=(24, 8, 8))
 
 
-# 我们需要记录一个全局的表示从当前时刻开始的在每个区域, 到某个时刻结束的时候在另外一个区域的车辆数量的列表
-# 根据这两个列表, 我们可以计算出一个转移概率矩阵
-# region_transition_amount[i][j][m][k] represents the traffic amount 
-# that at the m:00 hour at the Region i
-# after k hours, AKA, at the (m+k):00 hour, 
-# the traffic amount at the Region j
-region_transition_amount = np.zeros(shape=(8, 8, 24, 25))
-# the update rule of the region_transition_amount is :
-# region_transition_amount[i][j][m][k] = 
-# \sum_{l=0}^{7} region_transition_amount[i][l][m][k-1] * (region_traffic_amount[l][j][m+k-1][1] / current_time_traffic_amount[l][m+k-1])
-# the rule of calculating region_transition_amount: first input all the cases for k=0 and k=1 then use the above rule to calculate the rest of the cases
-
 
 # 我们需要记录一个全局的转移率的矩阵
 # region_transition_matrix[m][k][i][j] represents the transition probability from the Region i to the Region j 
@@ -98,19 +86,13 @@ class Region:#
 
         # update the traffic number
         for _hour in range(24):
-            # current_time_traffic_amount[self.idx - 1][_hour + 1] = current_time_traffic_amount[self.idx - 1][_hour] + self.getRegionTrafficChange(_hour)
             current_time_traffic_amount[_hour + 1][self.idx - 1] = current_time_traffic_amount[_hour][self.idx - 1] + self.getRegionTrafficChange(_hour)
-        global region_transition_amount
-        for _hour in range(24):
-            region_transition_amount[self.idx - 1][self.idx - 1][_hour][0] = current_time_traffic_amount[_hour][self.idx - 1]
-            # 0 hour 内到other region的转移量自然是0, 不用初始化
-        
+
         global hourly_traffic_among_regions
         for begin_hour in range(24):
             # 获取一个小时内的转移量的这个函数是正确的
             _tmp_one_hour_transition = self.getTransitionAmount2RegionOneHour(begin_hour)
             for _region_idx in range(8):
-                region_transition_amount[self.idx - 1][_region_idx][begin_hour][1] = _tmp_one_hour_transition[_region_idx]
                 hourly_traffic_among_regions[begin_hour][self.idx - 1][_region_idx] = _tmp_one_hour_transition[_region_idx]
 
     # 获得第hour个小时到第hour+1个小时之间的车辆数量的变化量
@@ -337,39 +319,6 @@ def initialize_CSSs_and_Regions(date, initials_traffic_amount_list):
             CCS_662, CCS_671, CCS_672, CCS_675, CCS_676,\
             Region_1, Region_2, Region_3, Region_4, Region_5, Region_6, Region_7, Region_8
 
-
-# 调用这个函数的契机是在所有的Region都初始化好之后
-def initialize_region_transition_amount():
-    global region_transition_amount
-    # 因此这时候k=0和k=1的region_transition_amount是已经初始化好的
-    for _begin_region_idx in range(8):
-        for _end_region_idx in range(8):
-            for _begin_hour in range(24):
-                for _k in range(2, 25):
-                    # _begin_hour = 0 , _k max = 24, thus, max(_begin_hour + _k) = 24
-                    if _begin_hour + _k >= 25:
-                        continue
-                    _tmp_sum = 0
-                    for _l in range(8):
-                        _tmp_sum += \
-                            region_transition_amount[_begin_region_idx][_l][_begin_hour][_k-1] * \
-                                (region_transition_amount[_l][_end_region_idx][_begin_hour + _k - 1][1] / current_time_traffic_amount[(_begin_hour + _k - 1) ][_l])
-                    region_transition_amount[_begin_region_idx][_end_region_idx][_begin_hour][_k] = _tmp_sum
-
-                    
-# # 调用这个函数的契机是在region_transition_amount已经初始化好之后
-# def initialize_region_transition_matrix():
-#     global region_transition_matrix
-#     for _begin_region_idx in range(8):
-#         for _end_region_idx in range(8):
-#             for _begin_hour in range(24):
-#                 for _k in range(25):
-#                     if _begin_hour + _k >= 25:
-#                         continue
-#                     region_transition_matrix[_begin_region_idx][_end_region_idx][_begin_hour][_k] =\
-#                     region_transition_amount[_begin_region_idx][_end_region_idx][_begin_hour][_k] / current_time_traffic_amount[_begin_hour][_begin_region_idx]
-
-
      
 # v2 of building region_transition_matrix
 def initialize_region_transition_matrix_v2():
@@ -388,7 +337,6 @@ def initialize_region_transition_matrix_v2():
                 hourly_traffic_among_regions[_begin_hour][_begin_region_idx][_end_region_idx] /\
                 current_time_traffic_amount[_begin_hour][_begin_region_idx]
 
-                # region_transition_amount[_begin_region_idx][_end_region_idx][_begin_hour][1] /\
 
     for _begin_region_idx in range(8):
         for _end_region_idx in range(8):
