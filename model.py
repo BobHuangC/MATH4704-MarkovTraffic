@@ -118,12 +118,10 @@ class Region:#
     def getTransitionAmount2RegionOneHour(self, begin_hour):
         # 当前还是有用的, 但是只能用来算一个hour内的
         output_trans_vector = [0] * 8
+        output_trans_vector = np.array(output_trans_vector)
         for _css in self.relatedCSSs:
             assert(self.idx == _css.P_input_region or self.idx == _css.P_output_region)
             _another_region_idx = _css.P_input_region if _css.P_input_region != self.idx else _css.P_output_region
-            # for _hour in range(begin_hour, end_hour):
-            #     _tmp_input, _tmp_output = _css.get_traffic_flow(_hour, self.idx)
-            #     _transition += _tmp_output
             _tmp_input, _tmp_output = _css.get_traffic_flow(begin_hour, self.idx)
             output_trans_vector[_another_region_idx - 1] += _tmp_output
         
@@ -338,15 +336,21 @@ def initialize_region_transition_matrix_v2():
                 current_time_traffic_amount[_begin_hour][_begin_region_idx]
 
 
-    for _begin_region_idx in range(8):
-        for _end_region_idx in range(8):
-            for _begin_hour in range(24):
-                for _k in range(2, 25):
-                    if _begin_hour + _k >= 25:
-                        continue
-                    _tmp_sum = 0
-                    for _l in range(8):
-                        _tmp_sum += \
-                            region_transition_matrix_v2[_begin_hour][_k-1][_begin_region_idx][_l] * \
-                                (region_transition_matrix_v2[_begin_hour + _k - 1][1][_l][_end_region_idx])
-                    region_transition_matrix_v2[_begin_hour][_k][_begin_region_idx][_end_region_idx] = _tmp_sum
+    # 通过矩阵乘法的格式进行更新
+    for _begin_hour in range(24):
+        for _k in range(2, 25):
+            if _begin_hour + _k < 25:
+                region_transition_matrix_v2[_begin_hour][_k] = np.dot(region_transition_matrix_v2[_begin_hour][_k-1], region_transition_matrix_v2[_begin_hour+_k-1][1])
+
+    # for _begin_region_idx in range(8):
+    #     for _end_region_idx in range(8):
+    #         for _begin_hour in range(24):
+    #             for _k in range(2, 25):
+    #                 if _begin_hour + _k >= 25:
+    #                     continue
+    #                 _tmp_sum = 0
+    #                 for _l in range(8):
+    #                     _tmp_sum += \
+    #                         region_transition_matrix_v2[_begin_hour][_k-1][_begin_region_idx][_l] * \
+    #                             (region_transition_matrix_v2[_begin_hour + _k - 1][1][_l][_end_region_idx])
+    #                 region_transition_matrix_v2[_begin_hour][_k][_begin_region_idx][_end_region_idx] = _tmp_sum
