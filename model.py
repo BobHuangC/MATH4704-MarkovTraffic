@@ -148,7 +148,7 @@ class Region:#
         
         # 加入转移到自己的车辆数量
         global current_time_traffic_amount
-        output_trans_vector[self.idx - 1] = current_time_traffic_amount[self.idx - 1][end_hour] - sum(output_trans_vector)
+        output_trans_vector[self.idx - 1] = current_time_traffic_amount[self.idx - 1][begin_hour] - sum(output_trans_vector)
         return output_trans_vector
 
     # 计算从begin_hour 到 end_hour之间 的转移概率
@@ -352,7 +352,9 @@ def initialize_region_transition_amount():
                         continue
                     _tmp_sum = 0
                     for _l in range(8):
-                        _tmp_sum += region_transition_amount[_begin_region_idx][_l][_begin_hour][_k-1] * (region_transition_amount[_l][_end_region_idx][_begin_hour + _k - 1][1] / current_time_traffic_amount[_l][(_begin_hour + _k - 1) % 24])
+                        _tmp_sum += \
+                            region_transition_amount[_begin_region_idx][_l][_begin_hour][_k-1] * \
+                                (region_transition_amount[_l][_end_region_idx][_begin_hour + _k - 1][1] / current_time_traffic_amount[_l][(_begin_hour + _k - 1) ])
                     region_transition_amount[_begin_region_idx][_end_region_idx][_begin_hour][_k] = _tmp_sum
 
                     
