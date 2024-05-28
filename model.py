@@ -10,9 +10,9 @@ current_time_traffic_amount = np.zeros(shape=(8, 25))
 
 
 # 我们需要一个显式的记录不同时刻, 不同区域之间车辆转移的情况(1小时的时间粒度)
-# hourly_traffic_among_regions[i][j][m] represents 
+# hourly_traffic_among_regions[m][i][j] represents 
 # the traffic amount from the i-th region to j-th region during the time of m:00 - m+1:00
-hourly_traffic_among_regions = np.zeros(shape=(8, 8, 24))
+hourly_traffic_among_regions = np.zeros(shape=(24, 8, 8))
 
 
 # 我们需要记录一个全局的表示从当前时刻开始的在每个区域, 到某个时刻结束的时候在另外一个区域的车辆数量的列表
@@ -116,8 +116,8 @@ class Region:#
             _tmp_one_hour_transition = self.getTransitionAmount2RegionOneHour(begin_hour)
             for _region_idx in range(8):
                 region_transition_amount[self.idx - 1][_region_idx][begin_hour][1] = _tmp_one_hour_transition[_region_idx]
-                hourly_traffic_among_regions[self.idx - 1][_region_idx][begin_hour] = _tmp_one_hour_transition[_region_idx]
-                
+                hourly_traffic_among_regions[begin_hour][self.idx - 1][_region_idx] = _tmp_one_hour_transition[_region_idx]
+
     # 获得第hour个小时到第hour+1个小时之间的车辆数量的变化量
     def getRegionTrafficChange(self, hour):
         traffic_change = 0
