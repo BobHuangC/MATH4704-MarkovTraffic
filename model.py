@@ -29,14 +29,9 @@ region_transition_amount = np.zeros(shape=(8, 8, 24, 25))
 
 
 # 我们需要记录一个全局的转移率的矩阵
-# region_transition_matrix[i][j][m][k] represents the transition probability from the Region i to the Region j 
+# region_transition_matrix[m][k][i][j] represents the transition probability from the Region i to the Region j 
 # the time of the transition is from the m:00 hour to the (m+k):00 hour
-# k-step transition matrix
-region_transition_matrix = np.zeros(shape=(8, 8, 24, 25))
-# the update rule of the region_transition_matrix is:
-# region_transition_matrix[i][j][m][k] = region_transition_amount[i][j][m][k] / current_time_traffic_amount[i][m]
-
-region_transition_matrix_v2 = np.zeros(shape=(8, 8, 24, 25))
+region_transition_matrix_v2 = np.zeros(shape=(24, 25, 8, 8))
 
 # Continuous Count Station 代表了一个交通流的连续计数站
 # 它记录了PLane 方向的车道上的车辆的数量, 以及NLane方向的车道上的车辆的数量
@@ -362,17 +357,17 @@ def initialize_region_transition_amount():
                     region_transition_amount[_begin_region_idx][_end_region_idx][_begin_hour][_k] = _tmp_sum
 
                     
-# 调用这个函数的契机是在region_transition_amount已经初始化好之后
-def initialize_region_transition_matrix():
-    global region_transition_matrix
-    for _begin_region_idx in range(8):
-        for _end_region_idx in range(8):
-            for _begin_hour in range(24):
-                for _k in range(25):
-                    if _begin_hour + _k >= 25:
-                        continue
-                    region_transition_matrix[_begin_region_idx][_end_region_idx][_begin_hour][_k] =\
-                    region_transition_amount[_begin_region_idx][_end_region_idx][_begin_hour][_k] / current_time_traffic_amount[_begin_hour][_begin_region_idx]
+# # 调用这个函数的契机是在region_transition_amount已经初始化好之后
+# def initialize_region_transition_matrix():
+#     global region_transition_matrix
+#     for _begin_region_idx in range(8):
+#         for _end_region_idx in range(8):
+#             for _begin_hour in range(24):
+#                 for _k in range(25):
+#                     if _begin_hour + _k >= 25:
+#                         continue
+#                     region_transition_matrix[_begin_region_idx][_end_region_idx][_begin_hour][_k] =\
+#                     region_transition_amount[_begin_region_idx][_end_region_idx][_begin_hour][_k] / current_time_traffic_amount[_begin_hour][_begin_region_idx]
 
 
      
@@ -384,12 +379,12 @@ def initialize_region_transition_matrix_v2():
     global hourly_traffic_among_regions
     for _begin_region_idx in range(8):
         for _begin_hour in range(24):
-            region_transition_matrix_v2[_begin_region_idx][_begin_region_idx][_begin_hour][0] = 1
+            region_transition_matrix_v2[_begin_hour][0][_begin_region_idx][_begin_region_idx] = 1
 
     for _begin_region_idx in range(8):
         for _end_region_idx in range(8):
             for _begin_hour in range(24):
-                region_transition_matrix_v2[_begin_region_idx][_end_region_idx][_begin_hour][1] = \
+                region_transition_matrix_v2[_begin_hour][1][_begin_region_idx][_end_region_idx] = \
                 hourly_traffic_among_regions[_begin_hour][_begin_region_idx][_end_region_idx] /\
                 current_time_traffic_amount[_begin_hour][_begin_region_idx]
 
@@ -404,6 +399,6 @@ def initialize_region_transition_matrix_v2():
                     _tmp_sum = 0
                     for _l in range(8):
                         _tmp_sum += \
-                            region_transition_matrix_v2[_begin_region_idx][_l][_begin_hour][_k-1] * \
-                                (region_transition_matrix_v2[_l][_end_region_idx][_begin_hour + _k - 1][1])
-                    region_transition_matrix_v2[_begin_region_idx][_end_region_idx][_begin_hour][_k] = _tmp_sum
+                            region_transition_matrix_v2[_begin_hour][_k-1][_begin_region_idx][_l] * \
+                                (region_transition_matrix_v2[_begin_hour + _k - 1][1][_l][_end_region_idx])
+                    region_transition_matrix_v2[_begin_hour][_k][_begin_region_idx][_end_region_idx] = _tmp_sum
