@@ -1,6 +1,6 @@
 # MATH-4704 MarkovTraffic
 
-This repo is BobHuangC's project homework for MATH-4704.
+This repo is the project homework of SJTU MATH-4704, stochastic process.
 
 ### Specific model method
 
