@@ -162,3 +162,5 @@ cython_debug/
 #.idea/
 
 preprocess/
+selected_code.ipynb
+selected_code.pdf
